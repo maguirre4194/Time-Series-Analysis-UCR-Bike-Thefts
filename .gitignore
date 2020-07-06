@@ -1,39 +1,308 @@
-# History files
-.Rhistory
-.Rapp.history
+---
+title: "Final Project"
+author: "Martin Aguirre"
+date: "June 3, 2016"
+output: html_document
+---
 
-# Session Data files
-.RData
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+library(TSA)
+setwd("C:/Users/Martin/Documents/STAT 146")
+bait =ts(read.table(file = "bait.txt"), freq=12,start=c(2000,1), end=c(2016,3))
+plot(bait,ylab="Number of Bike Thefts",xlab="Year",type="o",
+main="Monthly Bike Thefts")
 
-# User-specific files
-.Ruserdata
+adf.test(bait)
 
-# Example code in package build process
-*-Ex.R
+par(mfrow=c(1,2))
+acfpl <- acf(bait, plot=FALSE)
+acfpl$lag <- acfpl$lag * 12
+plot(acfpl, xlab="Lag",main="Sample ACF")
+pacfpl <- pacf(bait, plot=FALSE)
+pacfpl$lag <- pacfpl$lag * 12
+plot(pacfpl, xlab="Lag",main="Sample PACF")
 
-# Output files from R CMD build
-/*.tar.gz
 
-# Output files from R CMD check
-/*.Rcheck/
 
-# RStudio files
-.Rproj.user/
+```
 
-# produced vignettes
-vignettes/*.html
-vignettes/*.pdf
+```{r}
+##Equation for AR(1)
+bait.ar1.fit = arima(bait,order=c(1,0,0),method='ML')
+bait.ar1.fit
 
-# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
-.httr-oauth
+```
 
-# knitr and R markdown default cache directories
-*_cache/
-/cache/
+```{r}
+par(mfrow=c(2,2))
+plot(bait,ylab="Number of Bike Thefts",xlab="Year",type="o",
+main="Monthly Bike Thefts")
+plot(rstandard(bait.ar1.fit),xlab="Time",ylab="Standardised residuals",type='o')
+abline(h=0)
+hist(rstandard(bait.ar1.fit),xlab="Standardised residuals",main="")
+qqnorm(rstandard(bait.ar1.fit),main="")
+qqline(rstandard(bait.ar1.fit))
 
-# Temporary files created by R markdown
-*.utf8.md
-*.knit.md
+```
 
-# R Environment Variables
-.Renviron
+```{r}
+##Shapiro Test for AR(1)
+shapiro.test(rstandard(bait.ar1.fit))
+
+##Runs Test for AR(1)
+runs(rstandard(bait.ar1.fit))
+
+```
+
+```{r}
+##Residuals for AR(1)
+par(mfrow=c(1,1))
+pacf(rstandard(bait.ar1.fit),main="Sample PACF for AR(1) Residuals")
+
+```
+
+```{r}
+###Take the first difference
+plot(diff(bait),ylab="First Differences",xlab="Year",type="o",main="Differenced Monthly Bike Thefts")
+
+par(mfrow=c(1,2))
+acfsam <- acf(diff(bait),main="Sample ACF: 1st Differences", plot=FALSE)
+acfsam$lag <- acfsam$lag * 12
+plot(acfsam, xlab="Lag",main="Sample ACF: 1st Differences")
+pacfsam <- pacf(diff(bait),main="Sample PACF: 1st Differences", plot=FALSE)
+pacfsam$lag <- pacfsam$lag * 12
+plot(pacfsam, xlab="Lag",main="Sample PACF: 1st Differences")
+
+```
+
+```{r}
+plot(diff(sqrt(bait)),ylab="First Differences",xlab="Year",type="o",main="Differenced SQRT Monthly Bike Thefts")
+
+par(mfrow=c(1,2))
+acfsam <- acf(diff(sqrt(bait)),main="Sample ACF: 1st Differences", plot=FALSE)
+acfsam$lag <- acfsam$lag * 12
+plot(acfsam, xlab="Lag",main="Sample ACF: 1st Differences")
+pacfsam <- pacf(diff(sqrt(bait)),main="Sample PACF: 1st Differences", plot=FALSE)
+pacfsam$lag <- pacfsam$lag * 12
+plot(pacfsam, xlab="Lag",main="Sample PACF: 1st Differences")
+
+#Equation for Diff SQRT for MA(1)
+bait.diff.sqrt.ma1.fit = arima(diff(sqrt(bait)),order=c(0,0,1),method='ML')
+bait.diff.sqrt.ma1.fit
+
+#Test check
+par(mfrow=c(2,2))
+plot(diff(sqrt(bait)),ylab="Number of Bike Thefts",xlab="Year",type="o")
+plot(rstandard(bait.diff.sqrt.ma1.fit),xlab="Time",ylab="Standardised residuals",type='o')
+abline(h=0)
+hist(rstandard(bait.diff.sqrt.ma1.fit),xlab="Standardised residuals",main="Residuals for MA(1)")
+qqnorm(rstandard(bait.diff.sqrt.ma1.fit),main="For MA(1)")
+qqline(rstandard(bait.diff.sqrt.ma1.fit))
+
+#Shapiro and Runs Test
+shapiro.test(rstandard(bait.diff.sqrt.ma1.fit))
+
+runs(rstandard(bait.diff.sqrt.ma1.fit))
+
+#Residuals ACF
+par(mfrow=c(1,1))
+acfpl <- acf(rstandard(bait.diff.sqrt.ma1.fit), plot=FALSE)
+acfpl$lag <- acfpl$lag * 12
+plot(acfpl, xlab="Lag",main="Sample PACF for Residuals Diff SQRT")
+
+
+```
+
+
+```{r}
+par(mfrow=c(1,1))
+BoxCox.ar(bait)
+
+```
+
+```{r}
+plot(sqrt(bait),ylab="Number of Bike Thefts",xlab="Year",type="o",
+main="Monthly Bike Thefts SQRT Transformation")
+
+par(mfrow=c(1,2))
+acfpl <- acf(sqrt(bait), plot=FALSE)
+acfpl$lag <- acfpl$lag * 12
+plot(acfpl, xlab="Lag",main="Sample ACF")
+pacfpl <- pacf(sqrt(bait), plot=FALSE)
+pacfpl$lag <- pacfpl$lag * 12
+plot(pacfpl, xlab="Lag",main="Sample PACF")
+
+```
+
+```{r}
+##Equation for Sqrt AR(1)
+bait.sqrt.fit = arima(sqrt(bait),order=c(1,0,0),method='ML')
+bait.sqrt.fit
+
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(sqrt(bait),ylab="Number of Bike Thefts",xlab="Year",type="o")
+plot(rstandard(bait.sqrt.fit),xlab="Time",ylab="Standardised residuals",type='o')
+abline(h=0)
+hist(rstandard(bait.sqrt.fit),xlab="Standardised residuals",main="")
+qqnorm(rstandard(bait.sqrt.fit),main="")
+qqline(rstandard(bait.sqrt.fit))
+
+```
+
+```{r}
+##Shapiro Test for Sqrt
+shapiro.test(rstandard(bait.sqrt.fit))
+
+##Runs Test for Sqrt
+runs(rstandard(bait.sqrt.fit))
+
+```
+
+```{r}
+##Residuals PACF for Sqrt AR(1)
+par(mfrow=c(1,1))
+pacfpl <- pacf(rstandard(bait.sqrt.fit), plot=FALSE)
+pacfpl$lag <- pacfpl$lag * 12
+plot(pacfpl, xlab="Lag",main="Sample PACF for Residuals SQRT")
+
+```
+
+```{r}
+##Let's see if its ARMA
+eacf(sqrt(bait))
+
+##Equation for ARMA(1,1)
+bait.arma11.fit = arima(sqrt(bait),order=c(1,0,1),method='ML')
+bait.arma11.fit
+
+##Graphs
+par(mfrow=c(2,2))
+plot(sqrt(bait),ylab="Number of Bike Thefts",xlab="Year",type="o")
+plot(rstandard(bait.arma11.fit),xlab="Time",ylab="Standardised residuals",type='o')
+abline(h=0)
+hist(rstandard(bait.arma11.fit),xlab="Standardised residuals",main="")
+qqnorm(rstandard(bait.arma11.fit),main="")
+qqline(rstandard(bait.arma11.fit))
+
+```
+
+```{r}
+##Shapiro Test for ARMA(1,1)
+shapiro.test(rstandard(bait.arma11.fit))
+
+##Runs Test for ARMA(1,1)
+runs(rstandard(bait.arma11.fit))
+
+##Residuals for ARMA
+par(mfrow=c(1,1))
+acfpl <- acf(rstandard(bait.arma11.fit), plot=FALSE)
+acfpl$lag <- acfpl$lag * 12
+plot(acfpl, xlab="Lag",main="Sample ACF")
+```
+
+```{r}
+##Overfit
+#AR(2)
+bait.sqrt.ar2.fit = arima(sqrt(bait),order=c(2,0,0),method='ML')
+bait.sqrt.ar2.fit
+
+#AR(3)
+bait.sqrt.ar3.fit = arima(sqrt(bait),order=c(3,0,0),method='ML')
+bait.sqrt.ar3.fit
+
+##Graphs
+#AR(2)
+par(mfrow=c(2,4))
+plot(sqrt(bait),ylab="Number of Bike Thefts",xlab="Year",type="o")
+plot(rstandard(bait.sqrt.ar2.fit),xlab="Time",ylab="Standardised residuals",type='o')
+abline(h=0)
+hist(rstandard(bait.sqrt.ar2.fit),xlab="Standardised residuals",main="Residuals for AR(2)")
+qqnorm(rstandard(bait.sqrt.ar2.fit),main="For AR(2)")
+qqline(rstandard(bait.sqrt.ar2.fit))
+
+#AR(3)
+plot(sqrt(bait),ylab="Number of Bike Thefts",xlab="Year",type="o")
+plot(rstandard(bait.sqrt.ar3.fit),xlab="Time",ylab="Standardised residuals",type='o')
+abline(h=0)
+hist(rstandard(bait.sqrt.ar3.fit),xlab="Standardised residuals",main="Residuals for AR(3)")
+qqnorm(rstandard(bait.sqrt.ar3.fit),main="For AR(3)")
+qqline(rstandard(bait.sqrt.ar3.fit))
+
+
+```
+
+```{r}
+par(mfrow=c(1,1))
+baitprediction=ts(read.table(file = "baitprediction.txt"), freq=12,start=c(2000,1))
+plot(baitprediction,ylab="Number of Bike Thefts",xlab="Year",type="o",
+main="Monthly Bike Thefts")
+
+baitprediction.arma11.fit = arima(sqrt(baitprediction),order=c(1,0,1),method='ML')
+baitprediction.arma11.fit
+
+##Graphs for ARMA(1,1) for Bait
+par(mfrow=c(2,2))
+plot(sqrt(baitprediction),ylab="Number of Bike Thefts",xlab="Year",type="o")
+plot(rstandard(baitprediction.arma11.fit),xlab="Time",ylab="Standardised residuals",type='o')
+abline(h=0)
+hist(rstandard(baitprediction.arma11.fit),xlab="Standardised residuals",main="Residuals for ARMA(1,1)")
+qqnorm(rstandard(baitprediction.arma11.fit),main="Theoretical Quantiles for ARMA process")
+qqline(rstandard(baitprediction.arma11.fit))
+
+##Shapiro Test for ARMA(1,1)
+shapiro.test(rstandard(baitprediction.arma11.fit))
+
+##Runs Test for ARMA(1,1)
+runs(rstandard(baitprediction.arma11.fit))
+
+##Residuals for ARMA
+par(mfrow=c(1,2))
+acfpl <- acf(rstandard(baitprediction.arma11.fit), plot=FALSE)
+acfpl$lag <- acfpl$lag * 12
+plot(acfpl, xlab="Lag",main="Sample ACF")
+
+pacfpl <- pacf(rstandard(baitprediction.arma11.fit), plot=FALSE)
+pacfpl$lag <- pacfpl$lag * 12
+plot(pacfpl, xlab="Lag",main="Sample PACF")
+
+
+
+```
+
+```{r}
+###Forcasting
+#Prediction Data
+baitprediction.arma11.predict <- predict(baitprediction.arma11.fit,n.ahead=12)
+round(baitprediction.arma11.predict$pred,3)
+round(baitprediction.arma11.predict$se,3)
+
+#Obtain MMSE forcasts (on original scale)
+baitprediction.predict <-round((baitprediction.arma11.predict$pred + (1/2)*(baitprediction.arma11.predict$se)^2)^2,3)
+baitprediction.predict
+
+
+#Create a lower and upper prediction interval bounds
+lower.pi<-baitprediction.arma11.predict$pred-qnorm(0.975,0,1)*baitprediction.arma11.predict$se
+upper.pi<-baitprediction.arma11.predict$pred+qnorm(0.975,0,1)*baitprediction.arma11.predict$se
+year.temp = c(2014.964,2014.976,2014.984,2014.991,2014.997,2014.001,
+2014.005,2014.008,2014.010,2015.012,2015.013,2015.014)
+data.frame(Month= year.temp,lower.pi,upper.pi)
+
+#Exp
+data.frame(Month= year.temp,(lower.pi)^2,(upper.pi)^2)
+
+#Prediction Graph
+par(mfrow=c(1,1))
+plot(baitprediction.arma11.fit,n.ahead=12,col='red',type='b',pch=16,n1=c(2000,1),ylab="Prediction of the Monthy Bike Thefts",xlab="Year",main="Prediction of Monthy Bike Thefts")
+# Put horizontal line at ML estimate of overall mean
+abline(h=coef(baitprediction.arma11.fit)[names(coef(baitprediction.arma11.fit))=='intercept'])
+# Put prediction interval lines on plot (darker than default)
+lines(y=lower.pi,x=year.temp,lwd=2,col="red",lty="dashed")
+lines(y=upper.pi,x=year.temp,lwd=2,col="red",lty="dashed")
+
+
+```
+
